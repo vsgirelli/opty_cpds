@@ -10,8 +10,8 @@ init(Client, Validator, Store) ->
 handler(Client, Validator, Store, Reads, Writes) ->         
     receive
         {read, Ref, N} -> % N is the Entry (a tuple with N, Pid, Value)
-            case lists:keyfind(N, 1, Writes) of  %% searches in Writes if the Key of the Nth element corresponds to Ref
-                {N, _, Value} -> % returns e Value
+            case lists:keyfind(N, 1, Writes) of  %% searches in Writes if the Key 1 of the Nth element corresponds to Ref
+                {N, _, Value} -> % returns the Value
                     Client ! {value, Ref, Value}, %%
                     handler(Client, Validator, Store, Reads, Writes);
                 false -> % didn't find the Entry in the Writes
@@ -20,14 +20,14 @@ handler(Client, Validator, Store, Reads, Writes) ->
                     handler(Client, Validator, Store, Reads, Writes)
             end;
         {Ref, Entry, Value, Time} -> % Entry's reply to line 18
-            %% TODO: ADD SOME CODE HERE AND COMPLETE NEXT LINE forward to the client
-            handler(Client, Validator, Store, [...|Reads], Writes);
+            Client ! {value, Ref, Value}, %% forward to the client
+            handler(Client, Validator, Store, [ {Entry, Time} | Reads], Writes); % the {Entry, Time} is saved in the Reads
         {write, N, Value} -> % only visible to the local store (store set)
-            %% TODO: ADD SOME CODE HERE AND COMPLETE NEXT LINE
-            Added = lists:keystore(N, 1, ..., {N, ..., ...}),
+            Entry = store:lookup(N, Store), % Store has Entries PIDs, so look for N in the Store and gets the Entry's PID TODO check
+            Added = lists:keystore(N, 1, Stores, {N, Entry, Value}), % store the new {N, Entry, Value} to the Stores in the Nth element
             handler(Client, Validator, Store, Reads, Added);
         {commit, Ref} ->
-            %% TODO: ADD SOME CODE
+            Validator ! {validate, Ref, Reads, Writes, Client} %% sends the Reads and Writes to the Validator (to check for conflicts)
         abort ->
             ok
     end.
