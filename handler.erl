@@ -16,7 +16,7 @@ handler(Client, Validator, Store, Reads, Writes) ->
                     handler(Client, Validator, Store, Reads, Writes);
                 false -> % didn't find the Entry in the Writes
                     Entry = store:lookup(N, Store), % Store has Entries PIDs, so look for N in the Store and gets the Entry's PID
-                    Entry ! {read, Ref, self()} % self gives the PID
+                    Entry ! {read, Ref, self()}, % self gives the PID
                     handler(Client, Validator, Store, Reads, Writes)
             end;
         {Ref, Entry, Value, Time} -> % Entry's reply to line 18
@@ -24,7 +24,7 @@ handler(Client, Validator, Store, Reads, Writes) ->
             handler(Client, Validator, Store, [ {Entry, Time} | Reads], Writes); % the {Entry, Time} is saved in the Reads
         {write, N, Value} -> % only visible to the local store (store set)
             Entry = store:lookup(N, Store), % Store has Entries PIDs, so look for N in the Store and gets the Entry's PID TODO check
-            Added = lists:keystore(N, 1, Stores, {N, Entry, Value}), % store the new {N, Entry, Value} to the Stores in the Nth element
+            Added = lists:keystore(N, 1, Writes, {N, Entry, Value}), % store the new {N, Entry, Value} to the Writes in the Nth element
             handler(Client, Validator, Store, Reads, Added);
         {commit, Ref} ->
             Validator ! {validate, Ref, Reads, Writes, Client} %% sends the Reads and Writes to the Validator (to check for conflicts)
