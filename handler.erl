@@ -27,7 +27,7 @@ handler(Client, Validator, Store, Reads, Writes) ->
             Added = lists:keystore(N, 1, Writes, {N, Entry, Value}), % store the new {N, Entry, Value} to the Writes in the Nth element
             handler(Client, Validator, Store, Reads, Added);
         {commit, Ref} ->
-            Validator ! {validate, Ref, Reads, Writes, Client} %% sends the Reads and Writes to the Validator (to check for conflicts)
+            Validator ! {validate, Ref, Reads, Writes, Client}; %% sends the Reads and Writes to the Validator (to check for conflicts)
         abort ->
             ok
     end.
